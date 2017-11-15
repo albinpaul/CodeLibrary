@@ -1,0 +1,138 @@
+
+Input 
+	rating (user`s rating more preference + online)
+	play time in % or no of minutes played of song
+	no of times played
+Output
+	top 10 songs currently in the system
+Algorithm
+	
+	heuristic function parameterss
+		rating (user`s rating more preference + online rating)
+		average play time in % or no of minutes played of song
+		no of times played
+	output of heuristic function
+	generates a heuristic corresponding to each song 
+	rating = user rating + global rating (if connected to internet)
+
+HEURISTIC FUNCTION
+	heuristic function rating , playtime , Times played:
+		priority1=1
+		priority2=1
+		priority3=1 //intially all prioritys are set to 1
+		return (priority1*rating + priority2*playtime + priority3*Times played)
+
+INITIAL BUILDING MAIN QUEUE AND GENRE LIST
+	building queue function
+		create a list of genre available 
+		for each song in list of songs:
+			take each song calculate heuristic function
+			taking user rating = 0
+			put song`s pointers ,the corresponding heuristic,genre from neural network into the priority queue 
+			corresponding to each genre put the song pointer in the GENRE LIST 
+			and make sure the GENRE LIST is in decreasing order of heuristic 
+
+
+	//for each song played by user this will called
+PLAYED FUNCTION aka history 
+	create a TEMPORARY cache if not aleady 
+	for the song played song played calculate new heuristic value,genre, for the song Hs
+	if song is in temporary cache 
+		update from the cache itself
+	else 
+		create entry in the cache and insert calculated Hs and genre
+
+	The songs are updated from cache to the MAINQUEUE after certain number of songs (maybe songs):
+
+RECOMMENDATION ALGORITHM
+	Given option to select best song based on GENRE 
+		take certain number of songs from the GENRELIST based on genre and insert it to recommendation queue
+		and also search online for songs with best rating for present genre 
+		and add it to online songs recommendation queue
+	Given option is to select best songs just based on past history,
+	 	take certain songs from MAINQUEUE and then add it to recommendation queue
+	 	and search online for top 5 songs in the recommendation `s genre   
+		and add it to online songs recommendation queue
+
+GENRE CLASSIFICATION ALGORITHM
+	The rules that are required to classify the songs must be identified
+	in the computation of the FOIL algorithm computes the FOIL gain  
+		fgain(Ai) = |P′|(log |P′|/(|P′| + |N′|)− log |P|/(|P| + |N|))
+		is computed for every rule to select best rules that are needed for classifying the data
+		P is for positive dataset and N for negative
+		additional parameters for confidence and support must be added
+	in computation of the ARM algorithm we use two quantities support and confidence to identify their efficency
+		sup(r) = sup(A∧Yk) = #(A∧Yk)/N
+		and conf(r) = sup(A∧Yk)/sup(A)=sup(r)/sup(A)
+
+	after all rules are selected .Every classification rule must comprise of s five data elements:
+	the rule id,attribute items,class label,support ,confidence
+	use CRNN model construction algorithm 
+	Y = F(W^T*X + b) = F(n∑(i=1)wixi + b)=∑ni=1wixi + b
+	Yk =∑nkt=1F(rt)wt + bck= sYk1 F(r1) + sYk2 F(r2) + · · · + sYknkF(rnk) + bck
+	the Yk represent the output for each genre class
+
+A transaction database, D; 
+the minimum support threshold, σ.
+ARM ALGORITHM(associative rule based classification rule based generating)
+begin
+	initial RS = ∅
+	find all the frequent patternset, pts, that meet support σ
+	initial pattern and support map table, patternset = {}
+	for each p in pts do
+		given pattern p = (A ∧ Yi, sup) or p = (A, sup) if p
+		doesnt contain class label Yi then
+			add p in to patternset, patternset[A] = sup
+	for each p in pts do
+		given pattern p = (A ∧ Yi, sup) or p = (A, sup) if p
+		contains class label Yi then
+			add tuple (A, Yi, sup, sup/patternset[A] ) into RuleSet
+end
+
+A data set, ds; the minimum foil gain threshold, δ.
+Result: A rule set, RuleSet
+FOIL ALGORITHM (First Order Inductive Learner)
+begin
+	initial RuleSet = ∅, given class labels set
+	Y = Y1, · · · , YM for each c in Y do
+		initial rs4c = ∅ for class c
+		get positive and negative data sets, PD, ND of c
+		while PD != ∅ do
+			rbody = ∅, P D′ = PD, ND′ = ND
+			while |ND′| > 0 and rbody.length < max − rule − len do
+				searching Ai with maximum fgain
+				if fgain(Ai) < δ then
+					break
+				adding Ai into the rbody
+				delete examples not satisfied rbody in PD′,ND′
+			adding the rbody into rs4c
+			delete all the examples satisfied rbody in PD
+		for each rb in rs4c do
+			computing the sup(r) and conf(r) of rule
+			r : rb → c
+			adding rule tuple (rb, c, sup(r), conf(r)) into RuleSet
+end
+CRNN model construction
+Data: A rule set generated from data set, RuleSet.
+Result: The CRNN network, G.
+	begin
+	initial G =< V, E >, V = ∅, E = ∅, where V is the nodes set and E is the links set with weights.
+	for each r in RuleSet do
+	r = (RuleIDr, Pr, Yr, supr, confr) and
+		pr = ir1 ∧ · · · ∧ irmr
+		if node of Yr not in V then
+			create node ONr, and add it into V
+		if node of RuleID not in V then
+			create node CNr, and add it into V
+		create link(CNr, ONr, supr) and add it into E
+		for each e in Pr do
+			if node of attribute that contains e not in V
+			then
+				create node Xe, and add it into V
+			if node e not in V then
+				create node P Ne, and add it into V
+			if link (Xe, P Ne, 1) not in E then
+				create link (Xe, P Ne, 1.0) and add it into E
+			create link (P Ne, CNr, confr) and add it into E
+	normalize all the weights in every output node
+	end
